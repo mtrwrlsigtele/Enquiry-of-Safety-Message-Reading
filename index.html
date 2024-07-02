@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<head>
+    <title>Enquiry of Safety Message Reading</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+</head>
+<body>
+    <h2>Enquiry of Safety Message Reading</h2>
+    <input id="staffName" type="text" placeholder="Staff Name (case and space insensitive)"><br>
+    <input id="staffID" type="text" placeholder="Staff ID"><br>
+    <input id="keyCode" type="password" placeholder="Key Code"><br>
+    <input id="refCode" type="text" placeholder="Reference Code (Optional)"><br>
+    <button id="enquireButton" onclick="enquire()">Enquire</button>
+    <br><br>
+    <table id="please-wait" style="display: none; height:30px; width:100px; background-color:#fff348" class="alert-msg" > 
+        <tr><td>Please Wait</td></tr>
+    </table>
+    <br>
+    <table id="message-table" >
+        <tr><td> <strong>Message Reading Statistics</strong> </td></tr>
+    </table>
+    <br><br>
+    <table>
+        <tbody><tr><td class="valid">You have read this message</td></tr>
+        <tr><td class="invalid">You have read this message but ref code is invalid</td></tr>
+        <tr><td class="none-read">You haven't read this message</td></tr>
+    </tbody></table>
+</body>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById("staffName").value = urlParams.get('staffName');
+    document.getElementById("staffID").value = urlParams.get('staffID');
+    document.getElementById("keyCode").value = urlParams.get('keyCode');
+    document.getElementById("refCode").value = urlParams.get('refCode');
+
+
+    // for(day of getDaysInMonth(now.getFullYear() , now.getMonth())){
+        
+    // }
+
+
+    function enquire(){
+        document.getElementById("please-wait").style.display = "block";
+        temp = document.getElementsByClassName("calendar-row");
+        document.getElementById("enquireButton").setAttribute("disabled", "");
+        for(i=temp.length-1; i>=0; i--){temp[i].remove();}
+        
+        var staffName = document.getElementById("staffName").value;
+        var staffID = document.getElementById("staffID").value;
+        var keyCode = document.getElementById("keyCode").value;
+        var refCode = document.getElementById("refCode").value;
+        
+
+        var params = new URLSearchParams({staffName: staffName, staffID: staffID,  keyCode: keyCode,  refCode: refCode});
+        var url = "https://script.google.com/macros/s/AKfycbyhJ1bRJCYsq0jLZyUhRiuam_muPcsOdD63wIdVoYMWrMJGLMND7c-i8lvhMd6-KE7XVQ/exec";
+        
+        console.log(url + '?' + params)
+        fetch(url + '?' + params, {
+            redirect: "follow",
+            method: 'GET',
+            headers: {
+                'Content-Type': 'text/plain'}
+        })
+            .then(function(response) {
+                console.log(response);
+                document.getElementById("enquireButton").removeAttribute("disabled");
+                if (response.ok) {return response.json();} else {throw new Error('Request failed:', response.status);}
+            })
+            .then(function(responseData) {console.log(responseData); displayResult(responseData.content, params);})
+            .catch(function(error) {console.log('Request error:', error); });
+        
+        
+    }
+
+    function displayResult(response, params){
+        formURL = response["formURL"];
+        formParams = response["formParams"];
+        recordList = response["messageList"];
+        if (recordList.length==0){
+            recordList = [{"message": "Error: No reading record has been found, or Staff Name / ID / Key Code is incorrect", read:0},
+            {"message": "Error: You need to have at least one reading record to see the reading list", read:0}]
+        }
+
+        for(record of recordList){
+            trElement = addRow("message-table");
+            trElement.classList.add('calendar-row');
+
+            tdElement = addColumnInRow(trElement);
+            //tdElement.innerHTML = record['message'];
+            aElement = document.createElement('a');
+            aElement.innerHTML = record['message'];
+            if(formURL.length){
+                aElement.href = formURL + "?" + new URLSearchParams([
+                    [formParams["staffName"], params.get("staffName")]
+                    [formParams["staffID"], params.get("staffID")],
+                    [formParams["keyCode"], params.get("keyCode")],  
+                    [formParams["refCode"], params.get("refCode")],
+                    [formParams["message"], record['message']],
+                ]);
+                aElement.classList.add("a-plain-text")
+            }
+            tdElement.appendChild(aElement);
+            
+            tdElement.classList.add( (record['read']==1)? 'valid': (record['read']==2)? 'invalid':'none-read' );
+        }
+        
+        document.getElementById("please-wait").style.display = "none";
+    }
+
+
+    function fillCalendarTable(tableID, date,  recordList, idx=0){
+        while (idx<recordList.length && new Date(recordList[idx]['date']) < new Date(date.getFullYear(), date.getMonth(), 1) ){idx++;} 
+        for(day of getDaysInMonth(date.getFullYear() , date.getMonth())){
+            recordValidInDay = []; recordInvalidInDay = [];
+
+            while (idx<recordList.length && isSameDay(day, new Date(recordList[idx]['date']))){
+                record = recordList[idx];
+                if (record['refMatch']){recordValidInDay.push(record);} else {recordInvalidInDay.push(record);}
+                idx++;
+            }
+            
+            if (getDayInWeek(day)===0){trElement = addRow(tableID);}else if (day.getDate()==1){
+                trElement = addRow(tableID);
+                for (i = 0; i < getDayInWeek(day); i++) { addColumnInRow(trElement); }
+            }
+            trElement.classList.add('calendar-row')
+            
+            
+
+            tdElement = addColumnInRow(trElement);
+            tdElement.innerHTML = day.getDate();
+            if(day<now){tdElement.classList.add( (recordValidInDay.length)? 'valid': (recordInvalidInDay.length)? 'invalid':'none-read' ); }
+        }
+        return idx;
+    }
+
+
+    function getDaysInMonth(year, month) {
+        const daysInMonth = [];
+        const date = new Date(year, month, 1);
+
+        while (date.getMonth() === month) {
+            daysInMonth.push(new Date(date));
+            date.setDate(date.getDate() + 1);
+        }
+
+        return daysInMonth;
+    }
+
+    function getDayInWeek(date) {
+        const target = new Date(date.valueOf());
+        const dayNumber = (date.getUTCDay()+1) % 7;
+        return dayNumber;
+    }
+    function isSameDay(dateA, dateB) {
+        return (
+            dateA.getFullYear() === dateB.getFullYear() &&
+            dateA.getMonth() === dateB.getMonth() &&
+            dateA.getDate() === dateB.getDate()
+        );
+    }
+
+    function addRow(tableID) {
+        const table = document.getElementById(tableID); // Get the column element
+        const newRow = document.createElement('tr');
+        table.appendChild(newRow);
+        return newRow;
+    }
+    function addColumnInRow(row){
+        const newCol = document.createElement('td');
+        row.appendChild(newCol);
+        return newCol;
+    }
+    
+    if (document.getElementById("staffName").value!="" &&
+        document.getElementById("staffID").value!="" && 
+        document.getElementById("keyCode").value!=""){setTimeout(enquire, 300);}
+</script>

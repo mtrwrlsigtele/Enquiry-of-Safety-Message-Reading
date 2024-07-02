@@ -1,0 +1,32 @@
+.valid {
+    background-color: #5ff587;
+}
+.invalid{
+    background-color: #ee7fff;
+}
+
+.none-read{
+    background-color: #fc7979;
+}
+
+.a-plain-text{
+    color: black;
+    text-decoration: underline;
+}
+
+.alert-msg {
+    animation: color-transition 1.2s infinite;
+  }
+  
+  @keyframes color-transition {
+    0%, 100%{
+        background-color: #fff348;
+    }
+    50% {
+        background-color: #fb9f00;
+    }
+}
+
+input{
+    width:250px
+}
