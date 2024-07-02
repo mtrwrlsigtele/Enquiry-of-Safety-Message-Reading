@@ -91,7 +91,7 @@
             aElement.innerHTML = record['message'];
             if(formURL.length){
                 aElement.href = formURL + "?" + new URLSearchParams([
-                    [formParams["staffName"], params.get("staffName")]
+                    [formParams["staffName"], params.get("staffName")],
                     [formParams["staffID"], params.get("staffID")],
                     [formParams["keyCode"], params.get("keyCode")],  
                     [formParams["refCode"], params.get("refCode")],
