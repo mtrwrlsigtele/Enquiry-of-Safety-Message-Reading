@@ -33,13 +33,16 @@
     document.getElementById("keyCode").value = urlParams.get('keyCode');
     document.getElementById("refCode").value = urlParams.get('refCode');
 
-
+    var enquiryProcessLock = 0;
     // for(day of getDaysInMonth(now.getFullYear() , now.getMonth())){
         
     // }
 
 
     function enquire(){
+        if (enquiryProcessLock){return;}
+        enquiryProcessLock = 1;
+
         document.getElementById("please-wait").style.display = "block";
         temp = document.getElementsByClassName("calendar-row");
         document.getElementById("enquireButton").setAttribute("disabled", "");
@@ -63,6 +66,7 @@
         })
             .then(function(response) {
                 console.log(response);
+                enquiryProcessLock = 0;
                 document.getElementById("enquireButton").removeAttribute("disabled");
                 if (response.ok) {return response.json();} else {throw new Error('Request failed:', response.status);}
             })
