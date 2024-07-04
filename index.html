@@ -82,7 +82,7 @@
         recordList = response["messageList"];
         if (recordList.length==0){
             recordList = [{"message": "Error: No reading record has been found, or Staff Name / ID / Key Code is incorrect", read:0},
-            {"message": "Error: You need to have at least one reading record to see the reading list", read:0}]
+            {"message": "Error: For confidentiality purpose, you need to have at least one reading record to view the complete reading list", read:0}]
         }
 
         for(record of recordList){
